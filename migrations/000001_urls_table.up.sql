@@ -1,0 +1,10 @@
+BEGIN;
+
+DROP TABLE IF EXISTS urls;
+
+CREATE TABLE urls (
+    id varchar(9) PRIMARY KEY NOT NULL,
+    url TEXT NOT NULL
+);
+
+COMMIT;

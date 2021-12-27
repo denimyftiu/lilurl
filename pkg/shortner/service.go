@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"sync"
 
+	"github.com/dript0hard/lilurl/pkg/database"
 	"github.com/teris-io/shortid"
 )
 
@@ -18,36 +18,40 @@ type Shortner interface {
 	Expand(context.Context, string) (string, error)
 }
 
-var ErrorNotFound = errors.New("token not found.")
-var ErrorInvalidToken = errors.New("invalid token")
-var ErrorInvalidURL = errors.New("invalid url")
-
-// Service implementation for testing.
-type shortnerSvc struct {
-	mu    sync.Mutex
-	store map[string]string
+type ShortnerConfig struct {
+	DB *database.DB
 }
 
-func NewShortnerSvc() shortnerSvc {
-	return shortnerSvc{store: map[string]string{}}
+// Service implementation.
+type ShortnerService struct {
+	db *database.DB
 }
 
-func (s *shortnerSvc) Shorten(_ context.Context, url string) (string, error) {
+func NewShortner(scfg ShortnerConfig) *ShortnerService {
+	return &ShortnerService{
+		db: scfg.DB,
+	}
+}
+
+func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, error) {
 	if !isValidURL(url) {
 		return "", ErrorInvalidURL
 	}
-	token, err := shortid.Generate()
+	id, err := shortid.Generate()
 	if err != nil {
 		return "", err
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.store[token] = url
-	return token, nil
+	if err = s.db.CreateUrl(ctx, id, url); err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 func isValidURL(x string) bool {
+	if x == "" {
+		return false
+	}
 	_, err := url.Parse(x)
 	if len(x) > 2049 && err != nil {
 		return false
@@ -55,19 +59,17 @@ func isValidURL(x string) bool {
 	return true
 }
 
-func (s *shortnerSvc) Expand(_ context.Context, token string) (string, error) {
+func (s *ShortnerService) Expand(ctx context.Context, token string) (string, error) {
 	if !isValidToken(token) {
 		return "", ErrorInvalidToken
 	}
 
-	s.mu.Lock()
-	url, ok := s.store[token]
-	s.mu.Unlock()
-
-	if ok {
-		return url, nil
+	url, err := s.db.GetUrl(ctx, token)
+	if err != nil {
+		return "", ErrorNotFound
 	}
-	return "", ErrorNotFound
+
+	return url, nil
 }
 
 func isValidToken(token string) bool {
@@ -76,3 +78,7 @@ func isValidToken(token string) bool {
 	}
 	return true
 }
+
+var ErrorNotFound = errors.New("token not found.")
+var ErrorInvalidToken = errors.New("invalid token")
+var ErrorInvalidURL = errors.New("invalid url")

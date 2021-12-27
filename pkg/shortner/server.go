@@ -10,12 +10,17 @@ import (
 )
 
 type Server struct {
-	l  log.Logger
-	sh Shortner
+	sh *ShortnerService
 }
 
-func NewServer(sh Shortner) *Server {
-	return &Server{sh: sh}
+type ServerConfig struct {
+	Shortner *ShortnerService
+}
+
+func NewServer(scfg ServerConfig) *Server {
+	return &Server{
+		sh: scfg.Shortner,
+	}
 }
 
 // We may need to pass the mux to this. For flexibility.
@@ -34,7 +39,7 @@ type ShortenResponse struct {
 	Token string `json:"token"`
 }
 
-func (s Server) Shorten(rw http.ResponseWriter, r *http.Request) {
+func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	var req ShortenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -45,7 +50,7 @@ func (s Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	token, err := s.sh.Shorten(r.Context(), req.Url)
 	if err != nil {
 		if errors.Is(err, ErrorInvalidURL) {
-			http.Error(rw, err.Error(), http.StatusBadRequest)
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		} else {
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
@@ -58,13 +63,15 @@ func (s Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (s Server) Expand(rw http.ResponseWriter, r *http.Request) {
+func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 	p := mux.Vars(r)
 	token, ok := p["token"]
 	if !ok {
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
+	log.Printf("TOKEN: %s", token)
+
 	url, err := s.sh.Expand(r.Context(), token)
 	if err != nil {
 		if errors.Is(err, ErrorNotFound) {
