@@ -3,7 +3,6 @@ package shortner
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -70,7 +69,6 @@ func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
-	log.Printf("TOKEN: %s", token)
 
 	url, err := s.sh.Expand(r.Context(), token)
 	if err != nil {
