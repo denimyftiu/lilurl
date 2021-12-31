@@ -19,21 +19,30 @@ func (c *Cache) Close() error {
 }
 
 func (c Cache) CreateUrl(ctx context.Context, id, url string) error {
-	log.Printf("(Redis Set) Id: %s, Url: %s", id, url)
+	log.Printf("cache set(%q): %s", id, url)
 	if err := c.client.Set(ctx, id, url, 3*time.Minute).Err(); err != nil {
-		log.Printf("(Redis Set): %s", err.Error())
+		log.Printf("cache set(%q): %s", id, err.Error())
 		return err
 	}
 	return nil
 }
 
 func (c Cache) GetUrl(ctx context.Context, id string) (string, error) {
-	url, err := c.client.Get(ctx, id).Result()
+	// Set small timeout for fast fallback to postgres
+	getCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	url, err := c.client.Get(getCtx, id).Result()
 	if err != nil {
-		log.Printf("(Redis Get): %s", err.Error())
+		select {
+		case <-getCtx.Done():
+			log.Printf("cache get(%q): context timed out", id)
+		default:
+			log.Printf("cache get(%q): %s", id, err.Error())
+		}
 		return "", err
 	}
-	log.Printf("(Redis Retrieving) Id: %s, Url: %s", id, url)
+	log.Printf("cache get(%q): %s", id, url)
 	return url, nil
 }
 

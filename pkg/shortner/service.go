@@ -3,9 +3,7 @@ package shortner
 import (
 	"context"
 	"errors"
-	"log"
 	"net/url"
-	"time"
 
 	"github.com/dript0hard/lilurl/pkg/storage/cache"
 	"github.com/dript0hard/lilurl/pkg/storage/postgres"
@@ -50,7 +48,6 @@ func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, erro
 	}
 
 	if err = s.cache.CreateUrl(ctx, id, url); err != nil {
-		log.Printf("cache set(%q): cant set -> %v", id, url)
 		return "", err
 	}
 
@@ -77,20 +74,8 @@ func (s *ShortnerService) Expand(ctx context.Context, token string) (string, err
 		return "", ErrorInvalidToken
 	}
 
-	getCtx, cancel := context.WithTimeout(ctx, 30*time.Millisecond)
-	defer cancel()
-
-	url, err := s.cache.GetUrl(getCtx, token)
-	if err != nil {
-		select {
-		case <-getCtx.Done():
-			log.Printf("cache get(%q): context timed out", token)
-		default:
-			log.Printf("cache get(%q): %v", token, err)
-		}
-	}
-
-	if url != "" {
+	url, err := s.cache.GetUrl(ctx, token)
+	if err == nil {
 		return url, nil
 	}
 
