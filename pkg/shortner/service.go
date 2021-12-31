@@ -3,9 +3,12 @@ package shortner
 import (
 	"context"
 	"errors"
+	"log"
 	"net/url"
+	"time"
 
-	"github.com/dript0hard/lilurl/pkg/database"
+	"github.com/dript0hard/lilurl/pkg/storage/cache"
+	"github.com/dript0hard/lilurl/pkg/storage/postgres"
 	"github.com/teris-io/shortid"
 )
 
@@ -19,17 +22,20 @@ type Shortner interface {
 }
 
 type ShortnerConfig struct {
-	DB *database.DB
+	DB    *postgres.DB
+	Cache *cache.Cache
 }
 
 // Service implementation.
 type ShortnerService struct {
-	db *database.DB
+	db    *postgres.DB
+	cache *cache.Cache
 }
 
-func NewShortner(scfg ShortnerConfig) *ShortnerService {
+func NewShortner(scfg *ShortnerConfig) *ShortnerService {
 	return &ShortnerService{
-		db: scfg.DB,
+		db:    scfg.DB,
+		cache: scfg.Cache,
 	}
 }
 
@@ -37,14 +43,21 @@ func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, erro
 	if !isValidURL(url) {
 		return "", ErrorInvalidURL
 	}
+
 	id, err := shortid.Generate()
 	if err != nil {
+		return "", err
+	}
+
+	if err = s.cache.CreateUrl(ctx, id, url); err != nil {
+		log.Printf("cache set(%q): cant set -> %v", id, url)
 		return "", err
 	}
 
 	if err = s.db.CreateUrl(ctx, id, url); err != nil {
 		return "", err
 	}
+
 	return id, nil
 }
 
@@ -64,7 +77,24 @@ func (s *ShortnerService) Expand(ctx context.Context, token string) (string, err
 		return "", ErrorInvalidToken
 	}
 
-	url, err := s.db.GetUrl(ctx, token)
+	getCtx, cancel := context.WithTimeout(ctx, 30*time.Millisecond)
+	defer cancel()
+
+	url, err := s.cache.GetUrl(getCtx, token)
+	if err != nil {
+		select {
+		case <-getCtx.Done():
+			log.Printf("cache get(%q): context timed out", token)
+		default:
+			log.Printf("cache get(%q): %v", token, err)
+		}
+	}
+
+	if url != "" {
+		return url, nil
+	}
+
+	url, err = s.db.GetUrl(ctx, token)
 	if err != nil {
 		return "", ErrorNotFound
 	}

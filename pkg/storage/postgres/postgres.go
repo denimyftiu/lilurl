@@ -1,4 +1,4 @@
-package database
+package postgres
 
 import (
 	"context"
@@ -8,11 +8,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
-
-type ShortnerStorage interface {
-	CreateUrl(ctx context.Context, id, url string) error
-	GetUrl(ctx context.Context, id string) (url string, err error)
-}
 
 type DB struct {
 	pool *pgxpool.Pool
@@ -51,11 +46,11 @@ func (db DB) GetUrl(ctx context.Context, id string) (string, error) {
 		log.Printf("(Scan): %s", err.Error())
 		return "", err
 	}
-	log.Printf("(Retrieving) Url: %s", url)
+	log.Printf("(Retrieving) Id: %s, Url: %s", id, url)
 	return url, nil
 }
 
-func OpenDB(ctx context.Context, cfg *config.Config) (*DB, error) {
+func Open(ctx context.Context, cfg *config.Config) (*DB, error) {
 	pool, err := pgxpool.Connect(ctx, cfg.DBConnURI())
 	if err != nil {
 		return nil, err

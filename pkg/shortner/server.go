@@ -16,7 +16,7 @@ type ServerConfig struct {
 	Shortner *ShortnerService
 }
 
-func NewServer(scfg ServerConfig) *Server {
+func NewServer(scfg *ServerConfig) *Server {
 	return &Server{
 		sh: scfg.Shortner,
 	}
