@@ -42,22 +42,22 @@ func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	var req ShortenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	token, err := s.sh.Shorten(r.Context(), req.Url)
 	if err != nil {
 		if errors.Is(err, ErrorInvalidURL) {
-			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			http.Error(rw, err.Error(), http.StatusBadRequest)
 		} else {
-			rw.WriteHeader(http.StatusInternalServerError)
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	resp := ShortenResponse{Token: token}
-	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(rw).Encode(resp)
 	return
 }
@@ -66,16 +66,18 @@ func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 	p := mux.Vars(r)
 	token, ok := p["token"]
 	if !ok {
-		rw.WriteHeader(http.StatusNotFound)
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	url, err := s.sh.Expand(r.Context(), token)
 	if err != nil {
 		if errors.Is(err, ErrorNotFound) {
-			rw.WriteHeader(http.StatusNotFound)
+			http.Error(rw, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else if errors.Is(err, ErrorInvalidToken) {
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		} else {
-			rw.WriteHeader(http.StatusInternalServerError)
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
 	}

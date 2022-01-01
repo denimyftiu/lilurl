@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"time"
 
 	"github.com/dript0hard/lilurl/pkg/storage/cache"
 	"github.com/dript0hard/lilurl/pkg/storage/postgres"
@@ -47,9 +48,12 @@ func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, erro
 		return "", err
 	}
 
-	if err = s.cache.CreateUrl(ctx, id, url); err != nil {
-		return "", err
-	}
+	go func(id, url string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		ctx.Deadline()
+		defer cancel()
+		s.cache.CreateUrl(ctx, id, url)
+	}(id, url)
 
 	if err = s.db.CreateUrl(ctx, id, url); err != nil {
 		return "", err
@@ -84,11 +88,19 @@ func (s *ShortnerService) Expand(ctx context.Context, token string) (string, err
 		return "", ErrorNotFound
 	}
 
+	// If we got here that means we did not have it cached.
+	// So try to cache it asyncronously.
+	go func(id, url string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+		s.cache.CreateUrl(ctx, id, url)
+	}(token, url)
+
 	return url, nil
 }
 
 func isValidToken(token string) bool {
-	if token == "/" || len(token) < 5 {
+	if token == "/" || len(token) < 8 {
 		return false
 	}
 	return true

@@ -56,5 +56,9 @@ func Open(ctx context.Context, cfg *config.Config) (*DB, error) {
 		return nil, err
 	}
 
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+
 	return &DB{pool: pool}, nil
 }

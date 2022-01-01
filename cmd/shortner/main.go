@@ -22,13 +22,13 @@ func main() {
 
 	db, err := postgres.Open(ctx, cfg)
 	if err != nil {
-		log.Fatalf("(OpenDB): %s", err.Error())
+		log.Fatalf("postgres.Open: %s", err.Error())
 	}
 	defer db.Close()
 
 	cache, err := cache.Open(ctx, cfg)
 	if err != nil {
-		log.Fatalf("(OpenDB): %s", err.Error())
+		log.Fatalf("cache.Open: %s", err.Error())
 	}
 	defer db.Close()
 

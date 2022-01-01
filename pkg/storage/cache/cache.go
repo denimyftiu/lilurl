@@ -19,11 +19,11 @@ func (c *Cache) Close() error {
 }
 
 func (c Cache) CreateUrl(ctx context.Context, id, url string) error {
-	log.Printf("cache set(%q): %s", id, url)
 	if err := c.client.Set(ctx, id, url, 3*time.Minute).Err(); err != nil {
 		log.Printf("cache set(%q): %s", id, err.Error())
 		return err
 	}
+	log.Printf("cache set(%q): %s", id, url)
 	return nil
 }
 
@@ -54,6 +54,7 @@ func Open(ctx context.Context, c *config.Config) (*Cache, error) {
 	}
 
 	client := redis.NewClient(opts)
+
 	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
