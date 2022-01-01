@@ -50,7 +50,6 @@ func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, erro
 
 	go func(id, url string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		ctx.Deadline()
 		defer cancel()
 		s.cache.CreateUrl(ctx, id, url)
 	}(id, url)
