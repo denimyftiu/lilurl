@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/dript0hard/lilurl/pkg/config"
+	"github.com/denimyftiu/lilurl/pkg/config"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -18,22 +18,22 @@ func (db *DB) Close() {
 }
 
 func (db DB) CreateUrl(ctx context.Context, id, url string) error {
-	log.Printf("(Inserting) Id: %s, Url: %s", id, url)
+	log.Printf("postgres set(%q): %s", id, url)
 	tx, err := db.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		log.Printf("(BeginTx): %s", err.Error())
+		log.Printf("postgres beginTxError: %s", err.Error())
 		return err
 	}
 
 	if ct, err := tx.Exec(ctx, "INSERT INTO urls (id, url) VALUES ($1, $2)", id, url); err != nil {
-		log.Printf("sql: %s", ct.String())
-		log.Printf("(Exec): %s", err.Error())
+		log.Printf("postgres commandTag: %s", ct.String())
+		log.Printf("postgres set(%q): %s", id, err.Error())
 		tx.Rollback(ctx)
 		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		log.Printf("(Commit): %s", err.Error())
+		log.Printf("postgres commit: %s", err.Error())
 		tx.Rollback(ctx)
 		return err
 	}
@@ -43,10 +43,10 @@ func (db DB) CreateUrl(ctx context.Context, id, url string) error {
 func (db DB) GetUrl(ctx context.Context, id string) (string, error) {
 	var url string
 	if err := db.pool.QueryRow(ctx, "SELECT url FROM urls WHERE id = $1", id).Scan(&url); err != nil {
-		log.Printf("(Scan): %s", err.Error())
+		log.Printf("postgres get(%q): %s", id, err.Error())
 		return "", err
 	}
-	log.Printf("(Retrieving) Id: %s, Url: %s", id, url)
+	log.Printf("postgres get(%q): %s", id, url)
 	return url, nil
 }
 

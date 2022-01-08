@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/dript0hard/lilurl/pkg/storage/cache"
-	"github.com/dript0hard/lilurl/pkg/storage/postgres"
+	"github.com/denimyftiu/lilurl/pkg/storage/cache"
+	"github.com/denimyftiu/lilurl/pkg/storage/postgres"
 	"github.com/teris-io/shortid"
 )
 
@@ -38,7 +38,13 @@ func NewShortner(scfg *ShortnerConfig) *ShortnerService {
 	}
 }
 
-func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, error) {
+func (s ShortnerService) saveCache(id, url string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	_ = s.cache.CreateUrl(ctx, id, url)
+}
+
+func (s ShortnerService) Shorten(ctx context.Context, url string) (string, error) {
 	if !isValidURL(url) {
 		return "", ErrorInvalidURL
 	}
@@ -48,11 +54,8 @@ func (s *ShortnerService) Shorten(ctx context.Context, url string) (string, erro
 		return "", err
 	}
 
-	go func(id, url string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cancel()
-		s.cache.CreateUrl(ctx, id, url)
-	}(id, url)
+	// Save it to cache asyncronously.
+	go s.saveCache(id, url)
 
 	if err = s.db.CreateUrl(ctx, id, url); err != nil {
 		return "", err
@@ -89,11 +92,7 @@ func (s *ShortnerService) Expand(ctx context.Context, token string) (string, err
 
 	// If we got here that means we did not have it cached.
 	// So try to cache it asyncronously.
-	go func(id, url string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-		defer cancel()
-		s.cache.CreateUrl(ctx, id, url)
-	}(token, url)
+	go s.saveCache(token, url)
 
 	return url, nil
 }

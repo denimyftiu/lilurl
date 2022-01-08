@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/dript0hard/lilurl/pkg/config"
+	"github.com/denimyftiu/lilurl/pkg/config"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -19,7 +19,7 @@ func (c *Cache) Close() error {
 }
 
 func (c Cache) CreateUrl(ctx context.Context, id, url string) error {
-	if err := c.client.Set(ctx, id, url, 3*time.Minute).Err(); err != nil {
+	if err := c.client.Set(ctx, id, url, 15*time.Minute).Err(); err != nil {
 		log.Printf("cache set(%q): %s", id, err.Error())
 		return err
 	}
@@ -29,8 +29,8 @@ func (c Cache) CreateUrl(ctx context.Context, id, url string) error {
 
 func (c Cache) GetUrl(ctx context.Context, id string) (string, error) {
 	// Set small timeout for fast fallback to postgres
-	getCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
-	defer cancel()
+	getCtx, cancelGet := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancelGet()
 
 	url, err := c.client.Get(getCtx, id).Result()
 	if err != nil {

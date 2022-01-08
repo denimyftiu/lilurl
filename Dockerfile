@@ -12,13 +12,11 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o shortner ./cmd/shortner 
+RUN CGO_ENABLED=0 go build -o shortner -ldflags="-w -s" ./cmd/shortner 
 
 # Move binary to new container
 FROM scratch
 
 COPY --from=builder /app/shortner /shortner
-
 EXPOSE 8080
-
-CMD ["/shortner"]
+CMD ["/shortner", "-host", "0.0.0.0:8080"]

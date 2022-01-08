@@ -2,33 +2,37 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/dript0hard/lilurl/pkg/config"
-	"github.com/dript0hard/lilurl/pkg/shortner"
-	"github.com/dript0hard/lilurl/pkg/storage/cache"
-	"github.com/dript0hard/lilurl/pkg/storage/postgres"
+	"github.com/denimyftiu/lilurl/pkg/config"
+	"github.com/denimyftiu/lilurl/pkg/shortner"
+	"github.com/denimyftiu/lilurl/pkg/storage/cache"
+	"github.com/denimyftiu/lilurl/pkg/storage/postgres"
+)
+
+var (
+	hostAddr = flag.String("host", "localhost:8080", "Host address for the server")
 )
 
 func main() {
+	flag.Parse()
+
 	ctx := context.Background()
-	cfg, err := config.Init()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	cfg := config.Init()
 	cfg.Dump(os.Stdout)
 
 	db, err := postgres.Open(ctx, cfg)
 	if err != nil {
-		log.Fatalf("postgres.Open: %s", err.Error())
+		log.Fatalf("postgres Open: %s", err.Error())
 	}
 	defer db.Close()
 
 	cache, err := cache.Open(ctx, cfg)
 	if err != nil {
-		log.Fatalf("cache.Open: %s", err.Error())
+		log.Fatalf("cache Open: %s", err.Error())
 	}
 	defer db.Close()
 
@@ -42,5 +46,6 @@ func main() {
 	server := shortner.NewServer(serverCfg)
 	handler := server.Install()
 
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Printf("Serving on http://%s", *hostAddr)
+	log.Fatal(http.ListenAndServe(*hostAddr, handler))
 }

@@ -20,7 +20,7 @@ type Config struct {
 	RedisDB              int
 }
 
-func Init() (*Config, error) {
+func Init() *Config {
 	cfg := &Config{
 		DBHost:        GetEnv("POSTGRES_DB_HOST", "localhost"),
 		DBPort:        GetEnv("POSTGRES_DB_PORT", "5432"),
@@ -32,7 +32,7 @@ func Init() (*Config, error) {
 		RedisDB:       mustParseInt(GetEnv("REDIS_DB", "0")),
 		RedisPassword: GetEnv("REDIS_PASSWORD", ""),
 	}
-	return cfg, nil
+	return cfg
 }
 
 func (c Config) Dump(w io.Writer) error {
