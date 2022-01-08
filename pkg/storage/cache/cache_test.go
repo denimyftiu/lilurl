@@ -105,7 +105,7 @@ func TestOpenClient(t *testing.T) {
 	defer c.Close()
 }
 
-func TestOpenClientTimeout(t *testing.T) {
+func TestOpenClientServerDown(t *testing.T) {
 	ctx := context.Background()
 
 	s, err := miniredis.Run()
