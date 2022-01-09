@@ -11,6 +11,8 @@ import (
 	"github.com/denimyftiu/lilurl/pkg/shortner"
 	"github.com/denimyftiu/lilurl/pkg/storage/cache"
 	"github.com/denimyftiu/lilurl/pkg/storage/postgres"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 var (
@@ -46,6 +48,12 @@ func main() {
 	server := shortner.NewServer(serverCfg)
 	handler := server.Install()
 
+	h2s := &http2.Server{}
+	s := http.Server{
+		Addr:    *hostAddr,
+		Handler: h2c.NewHandler(handler, h2s),
+	}
+
 	log.Printf("Serving on http://%s", *hostAddr)
-	log.Fatal(http.ListenAndServe(*hostAddr, handler))
+	log.Fatal(s.ListenAndServe())
 }

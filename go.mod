@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 )
 
 require (
