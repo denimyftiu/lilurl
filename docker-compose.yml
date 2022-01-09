@@ -12,6 +12,22 @@ services:
       - POSTGRES_DB=postgres
     ports:
       - 5432:5432
+  migrator:
+    image: golang:1.17
+    depends_on:
+      - db
+    command: bash -c "go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest && ./migrate-db.sh"
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - gomodcache:/gomodcache
+    environment:
+      - GOMODCACHE=/gomodcache
+      - POSTGRES_DB_HOST=db
+      - POSTGRES_DB_PASSWORD=postgres
+      - POSTGRES_DB_USER=postgres
+      - POSTGRES_DB_PORT=5432
+      - POSTGRES_DB_NAME=postgres
   cache:
     image: redis:alpine
     container_name: cache
@@ -20,14 +36,17 @@ services:
   shortner:
     build: .
     container_name: lilurl
+    restart: on-failure
     ports:
       - 8080:8080
     environment:
       - POSTGRES_DB_HOST=db
       - REDIS_HOST=cache
     depends_on:
-      - db
+      - migrator
       - cache
+      - db
 
 volumes:
   postgres_data_prod:
+  gomodcache:
