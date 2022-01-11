@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("cache Open: %s", err.Error())
 	}
-	defer db.Close()
+	defer cache.Close()
 
 	serviceCfg := &shortner.ShortnerConfig{
 		DB:    db,
@@ -55,5 +55,8 @@ func main() {
 	}
 
 	log.Printf("Serving on http://%s", *hostAddr)
-	log.Fatal(s.ListenAndServe())
+	if err := s.ListenAndServe(); err != nil {
+		// Deferables don't run after log.Fatal because of os.Exit(1).
+		log.Println(err)
+	}
 }
