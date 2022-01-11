@@ -69,7 +69,10 @@ func isValidURL(x string) bool {
 		return false
 	}
 	_, err := url.Parse(x)
-	if len(x) > 2049 && err != nil {
+	if err != nil {
+		return false
+	}
+	if len(x) > 2049 {
 		return false
 	}
 	return true
@@ -80,21 +83,19 @@ func (s *ShortnerService) Expand(ctx context.Context, token string) (string, err
 		return "", ErrorInvalidToken
 	}
 
-	url, err := s.cache.GetUrl(ctx, token)
-	if err == nil {
+	// If we recieved the url from cache without errors we just return it.
+	if url, err := s.cache.GetUrl(ctx, token); err == nil {
 		return url, nil
 	}
 
-	url, err = s.db.GetUrl(ctx, token)
-	if err != nil {
-		return "", ErrorNotFound
+	if url, err := s.db.GetUrl(ctx, token); err == nil {
+		// If we got here that means we did not have it cached.
+		// So try to cache it asyncronously and return directly.
+		go s.saveCache(token, url)
+		return url, nil
 	}
 
-	// If we got here that means we did not have it cached.
-	// So try to cache it asyncronously.
-	go s.saveCache(token, url)
-
-	return url, nil
+	return "", ErrorNotFound
 }
 
 func isValidToken(token string) bool {
