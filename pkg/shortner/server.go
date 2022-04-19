@@ -25,8 +25,8 @@ func NewServer(scfg *ServerConfig) *Server {
 // We may need to pass the mux to this. For flexibility.
 func (s Server) Install() *mux.Router {
 	r := mux.NewRouter()
-	r.Handle("/", http.HandlerFunc(s.Shorten)).Methods("POST")
-	r.Handle("/{token}", http.HandlerFunc(s.Expand)).Methods("GET")
+	r.Handle("/", http.HandlerFunc(s.Shorten)).Methods(http.MethodPost)
+	r.Handle("/{token}", http.HandlerFunc(s.Expand)).Methods(http.MethodGet)
 	return r
 }
 
