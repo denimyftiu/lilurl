@@ -11,6 +11,12 @@ import (
 	"github.com/teris-io/shortid"
 )
 
+var (
+	ErrorNotFound     = errors.New("token not found")
+	ErrorInvalidToken = errors.New("invalid token")
+	ErrorInvalidURL   = errors.New("invalid url")
+)
+
 // Url Shortener interface to be implemented.
 type Shortner interface {
 	// Shorten url to token.
@@ -104,7 +110,3 @@ func isValidToken(token string) bool {
 	}
 	return true
 }
-
-var ErrorNotFound = errors.New("token not found")
-var ErrorInvalidToken = errors.New("invalid token")
-var ErrorInvalidURL = errors.New("invalid url")
