@@ -59,7 +59,6 @@ func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	resp := ShortenResponse{Token: token}
 	rw.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(rw).Encode(resp)
-	return
 }
 
 func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
@@ -83,5 +82,4 @@ func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(rw, r, url, http.StatusMovedPermanently)
-	return
 }

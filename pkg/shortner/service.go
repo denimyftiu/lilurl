@@ -105,6 +105,6 @@ func isValidToken(token string) bool {
 	return true
 }
 
-var ErrorNotFound = errors.New("token not found.")
+var ErrorNotFound = errors.New("token not found")
 var ErrorInvalidToken = errors.New("invalid token")
 var ErrorInvalidURL = errors.New("invalid url")
