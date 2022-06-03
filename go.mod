@@ -1,6 +1,6 @@
 module github.com/denimyftiu/lilurl
 
-go 1.17
+go 1.18
 
 require (
 	github.com/alicebob/miniredis/v2 v2.17.0
@@ -9,7 +9,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125
-	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 )
 
 require (
@@ -26,5 +25,6 @@ require (
 	github.com/jackc/puddle v1.2.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d // indirect
 	golang.org/x/text v0.3.6 // indirect
 )

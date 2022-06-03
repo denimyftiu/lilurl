@@ -6,13 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/denimyftiu/lilurl/pkg/config"
 	"github.com/denimyftiu/lilurl/pkg/shortner"
 	"github.com/denimyftiu/lilurl/pkg/storage/cache"
 	"github.com/denimyftiu/lilurl/pkg/storage/postgres"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 var (
@@ -46,17 +46,34 @@ func main() {
 
 	serverCfg := &shortner.ServerConfig{Shortner: ssvc}
 	server := shortner.NewServer(serverCfg)
-	handler := server.Install()
+	serveMux := server.Install()
 
-	h2s := &http2.Server{}
 	s := http.Server{
-		Addr:    *hostAddr,
-		Handler: h2c.NewHandler(handler, h2s),
+		Addr:         *hostAddr,
+		Handler:      serveMux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
-	log.Printf("Serving on http://%s", *hostAddr)
-	if err := s.ListenAndServe(); err != nil {
-		// Deferables don't run after log.Fatal because of os.Exit(1).
-		log.Println(err)
+	go func() {
+		log.Printf("Serving on http://%s", *hostAddr)
+		if err := s.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal)
+	defer close(sigChan)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
+
+	sig := <-sigChan
+	log.Printf("Recieved termination signal: %s", sig)
+
+	shutDownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := s.Shutdown(shutDownCtx); err != nil {
+		log.Fatal(err)
 	}
+	log.Printf("Terminated gracefully!")
 }
