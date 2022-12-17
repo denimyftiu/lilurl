@@ -13,7 +13,7 @@ services:
     ports:
       - 5432:5432
   migrator:
-    image: golang:1.18
+    image: golang:1.19.3
     depends_on:
       - db
     command: bash -c "go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest && ./migrate-db.sh"
