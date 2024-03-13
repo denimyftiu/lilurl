@@ -1,7 +1,7 @@
 # Build stage
-FROM golang:1.19.3 AS builder
+FROM golang:1.22.1 AS builder
 
-RUN apk update && apk add --no-cache git
+# RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
