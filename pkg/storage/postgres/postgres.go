@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/denimyftiu/lilurl/pkg/config"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DB struct {
@@ -51,7 +51,7 @@ func (db DB) GetUrl(ctx context.Context, id string) (string, error) {
 }
 
 func Open(ctx context.Context, cfg *config.Config) (*DB, error) {
-	pool, err := pgxpool.Connect(ctx, cfg.DBConnURI())
+	pool, err := pgxpool.New(ctx, cfg.DBConnURI())
 	if err != nil {
 		return nil, err
 	}
