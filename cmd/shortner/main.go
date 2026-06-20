@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/denimyftiu/lilurl/pkg/config"
@@ -63,12 +64,13 @@ func main() {
 		}
 	}()
 
-	sigChan := make(chan os.Signal)
-	defer close(sigChan)
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
+	sigChan := make(chan os.Signal, 1)
+	defer signal.Stop(sigChan)
+
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 
 	sig := <-sigChan
-	log.Printf("Recieved termination signal: %s", sig)
+	log.Printf("Received termination signal: %s", sig)
 
 	shutDownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

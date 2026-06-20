@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22.1 AS builder
+FROM golang:1.26.4 AS builder
 
 # RUN apk update && apk add --no-cache git
 

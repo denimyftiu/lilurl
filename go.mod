@@ -1,6 +1,6 @@
 module github.com/denimyftiu/lilurl
 
-go 1.22.1
+go 1.26.4
 
 require (
 	github.com/alicebob/miniredis/v2 v2.32.1
