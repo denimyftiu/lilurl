@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -59,7 +60,7 @@ func main() {
 
 	go func() {
 		log.Printf("Serving on http://%s", *hostAddr)
-		if err := s.ListenAndServe(); err != nil {
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -72,10 +73,12 @@ func main() {
 	sig := <-sigChan
 	log.Printf("Received termination signal: %s", sig)
 
-	shutDownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutDownCtx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
+
 	if err := s.Shutdown(shutDownCtx); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Could not shut down gracefully: %s", err)
 	}
+
 	log.Printf("Terminated gracefully!")
 }

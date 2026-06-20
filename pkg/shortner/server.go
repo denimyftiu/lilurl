@@ -3,7 +3,11 @@ package shortner
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
+	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -40,6 +44,18 @@ type ShortenResponse struct {
 
 func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	var req ShortenRequest
+
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if strings.Compare(mediaType, "application/json") != 0 {
+		http.Error(rw, fmt.Sprintf("Invalid content type: %s. Only application/json supported", mediaType), http.StatusBadRequest)
+		log.Printf("Invalid content type: %s. Only application/json supported", mediaType)
+		return
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
