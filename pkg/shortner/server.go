@@ -52,7 +52,7 @@ func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.Compare(mediaType, "application/json") != 0 {
-		http.Error(rw, fmt.Sprintf("Invalid content type: %s. Only application/json supported", mediaType), http.StatusBadRequest)
+		http.Error(rw, fmt.Sprintf("Invalid content type: %s. Only application/json supported", mediaType), http.StatusUnsupportedMediaType)
 		log.Printf("Invalid content type: %s. Only application/json supported", mediaType)
 		return
 	}
