@@ -16,6 +16,7 @@ func TestBasics(t *testing.T) {
 	ctx := context.Background()
 
 	s, err := miniredis.Run()
+	defer s.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,6 +72,7 @@ func TestBasics(t *testing.T) {
 
 func TestCloseClient(t *testing.T) {
 	s, err := miniredis.Run()
+	defer s.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,6 +90,7 @@ func TestOpenClient(t *testing.T) {
 	ctx := context.Background()
 
 	s, err := miniredis.Run()
+	defer s.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
