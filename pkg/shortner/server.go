@@ -98,6 +98,6 @@ func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Header().Set("Cache-control", "no-cache")
+	rw.Header().Set("Cache-control", "no-store")
 	http.Redirect(rw, r, url, http.StatusFound)
 }
