@@ -59,6 +59,7 @@ func (s *Server) Shorten(rw http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		log.Printf("Failed to decode request %s", err)
 		return
 	}
 
@@ -97,5 +98,6 @@ func (s *Server) Expand(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(rw, r, url, http.StatusMovedPermanently)
+	rw.Header().Set("Cache-control", "no-cache")
+	http.Redirect(rw, r, url, http.StatusFound)
 }
